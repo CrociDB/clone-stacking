@@ -49,6 +49,8 @@
 
 ;; Game
 
+(var player-pick-sprite (sprite-create [260 262] 20 1))
+
 (var player-entity (entity-create 0.0 0.0 [ (sprite-create [288 290] 18 1)
                                         (sprite-create [292 294] 18 1)
                                         (sprite-create [296 298] 18 1)
@@ -57,7 +59,7 @@
 (var stategame {:data {} :reset (fn []) :update (fn [])})
 
 (fn player-create [mx my entity]
-  {:mx mx :my my :entity entity :state :IDLE})
+  {:mx mx :my my :entity entity :state :IDLE :clonepos []})
 
 (fn player-move-to [p dir m]
   (var mx (+ m.mx p.mx))
@@ -78,6 +80,29 @@
     (set p.mx mx)
     (set p.my my)))
 
+(fn player-start-cloning [p m]
+  (sfx 13 75 30 0 8 1)
+  (set p.state :CLONING)
+  (set p.entity.sprite 1)
+
+  (var x p.mx)
+  (var y p.my)
+
+  (set p.clonepos [])
+
+  (for [i (- x 4) (+ x 4) 2]
+    (for [j (- y 4) (+ y 4) 2]
+      (if (map-check-valid-position m i j)
+        (table.insert p.clonepos {:x i :y j})))))
+
+(fn player-draw-clone [p m]
+  (each [k e (ipairs p.clonepos)]
+    (sprite-draw player-pick-sprite (* (+ m.mx e.x) 8) (* (+ m.my e.y) 8))))
+
+(fn player-start-idle [p m]
+  (sfx 14 72 30 0 8 1)
+  (set p.state :IDLE))
+
 (fn player-update [p m]
   (var tx (* p.mx 8))
   (var ty (* p.my 8))
@@ -89,15 +114,21 @@
   (when (<= (math.abs (- p.entity.y ty)) .2) (set p.entity.y ty))
 
   (if (= p.state :IDLE)
-    (let []
-      (when (btnp 0) (player-move-to p :UP m))
-      (when (btnp 1) (player-move-to p :DOWN m))
-      (when (btnp 2) (player-move-to p :LEFT m))
-      (when (btnp 3) (player-move-to p :RIGHT m)))
-  ))
+        (let []
+          (when (btnp 0) (player-move-to p :UP m))
+          (when (btnp 1) (player-move-to p :DOWN m))
+          (when (btnp 2) (player-move-to p :LEFT m))
+          (when (btnp 3) (player-move-to p :RIGHT m))
+          (when (btnp 4) (player-start-cloning p m)))
+      (= p.state :CLONING)
+        (let []
+          (when (btnp 4) (player-start-idle p m))))
+  )
 
-(fn player-draw [p]
-  (entity-draw p.entity))
+(fn player-draw [p m]
+  (entity-draw p.entity)
+  
+  (when (= p.state :CLONING) (player-draw-clone p m)))
 
 (fn player-indicator-draw [pi p]
   (var x p.entity.x)
@@ -126,8 +157,10 @@
   (player-update stategame.data.player stategame.data.map)
 
   (map-draw stategame.data.map)  
-  (player-draw stategame.data.player)
-  (player-indicator-draw stategame.data.playerindicator stategame.data.player)
+  (player-draw stategame.data.player stategame.data.map)
+
+  (when (= stategame.data.player.state :IDLE)
+    (player-indicator-draw stategame.data.playerindicator stategame.data.player))
   
   (hud-draw stategame.data.player stategame.data.map)))
 
@@ -161,8 +194,16 @@
 ;; <SPRITES>
 ;; 002:0000000000000000000000000000000000000000000000000000333300003222
 ;; 003:0000000000000000000000000000000000000000000000003333000022230000
+;; 004:0000000000000000003330000030000000300000000000000000000000000000
+;; 005:0000000000000000000333000000030000000300000000000000000000000000
+;; 006:0000000000000000000000000003330000030000000300000000000000000000
+;; 007:0000000000000000000000000033300000003000000030000000000000000000
 ;; 018:0000032200000032000000030000000000000000000000000000000000000000
 ;; 019:2230000023000000300000000000000000000000000000000000000000000000
+;; 020:0000000000000000000000000030000000300000003330000000000000000000
+;; 021:0000000000000000000000000000030000000300000333000000000000000000
+;; 022:0000000000000000000300000003000000033300000000000000000000000000
+;; 023:0000000000000000000030000000300000333000000000000000000000000000
 ;; 032:000000000000ff00000fdcf000fdddcf000fddf00000ffdf0000fddd000fdddd
 ;; 033:0000000000000000000000000000000000000000fff00000ddcf0000dddcf000
 ;; 034:0000ff00000fdcf000fdddcf000fddf00000ffdf0000fddd000fdddd00fddd2d
@@ -207,15 +248,17 @@
 ;; </MAP>
 
 ;; <WAVES>
-;; 000:00000000ffffffff00000000ffffffff
-;; 001:0123456789abcdeffedcba9876543210
+;; 000:0469bdefffdba9976554333566677666
 ;; 002:0123456789abcdef0123456789abcdef
+;; 003:009bc034b74679568045778967968958
 ;; 004:0899abccc75432211148abaa96556665
 ;; </WAVES>
 
 ;; <SFX>
 ;; 000:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304000000000
 ;; 012:4460340024001400140014002400240044005400740084009400a400b400c400c400d400e400f400f400f400f400f400f400f400f400f400f400f400304000000000
+;; 013:f100f100e100e100d100c100c100b100a1009100810071005100310021001100110001000100010011002100410061008100a100c100e100f100f10070b000000000
+;; 014:e100a1006100310021002100110001000100010001000100110011002100310041005100610071009100a100a100b100c100d100d100e100e100f10070b000000000
 ;; </SFX>
 
 ;; <TRACKS>
