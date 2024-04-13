@@ -50,6 +50,7 @@
 ;; Game
 
 (var player-pick-sprite (sprite-create [260 262] 20 1))
+(var playerindicator (entity-create 0.0 0.0 [(sprite-create [258] 18 1)]))
 
 (var player-entity (entity-create 0.0 0.0 [ (sprite-create [288 290] 18 1)
                                         (sprite-create [292 294] 18 1)
@@ -59,11 +60,11 @@
 (var stategame {:data {} :reset (fn []) :update (fn [])})
 
 (fn player-create [mx my entity]
-  {:mx mx :my my :entity entity :state :IDLE :clonepos []})
+  {:mx mx :my my :entity entity :state :IDLE :clonepos [] :ix 0 :iy 0})
 
 (fn player-move-to [p dir m]
-  (var mx (+ m.mx p.mx))
-  (var my (+ m.my p.my))
+  (var mx p.mx)
+  (var my p.my)
 
   (if (= dir :UP)   (set my (- my 2))
       (= dir :DOWN)  (set my (+ my 2))
@@ -74,13 +75,40 @@
       (= dir :DOWN)  (set p.entity.sprite 1)
       (= dir :LEFT)  (set p.entity.sprite 3)
       (= dir :RIGHT)  (set p.entity.sprite 2))
-
+  
   (when (map-check-valid-position m mx my)
     (sfx 12 35 20 0 8 1)
     (set p.mx mx)
     (set p.my my)))
 
-(fn player-start-cloning [p m]
+(fn player-position-in-cloning-range [p x y]
+  (var res 0)
+  (each [k v (ipairs p.clonepos)] 
+    (when (and (= v.x x) (= v.y y))
+      (set res (+ res 1))))
+  (> res 0))
+
+(fn player-move-indicator [p dir m]
+  (var mx p.ix)
+  (var my p.iy)
+
+  (if (= dir :UP)   (set my (- my 2))
+      (= dir :DOWN)  (set my (+ my 2))
+      (= dir :LEFT)  (set mx (- mx 2))
+      (= dir :RIGHT)  (set mx (+ mx 2)))
+
+  (when (player-position-in-cloning-range p mx my)
+    (sfx 12 55 20 0 8 1)
+    (set p.ix mx)
+    (set p.iy my)))
+
+(fn player-is-any-clone-in-position [pos c]
+  (var res 0)
+  (each [k v (ipairs c)]
+    (set res (+ (if (and (= v.mx pos.x) (= v.my pos.y)) 1 0))))
+  (> res 0))
+
+(fn player-start-cloning [p m c]
   (sfx 13 75 30 0 8 1)
   (set p.state :CLONING)
   (set p.entity.sprite 1)
@@ -92,8 +120,12 @@
 
   (for [i (- x 4) (+ x 4) 2]
     (for [j (- y 4) (+ y 4) 2]
-      (if (map-check-valid-position m i j)
-        (table.insert p.clonepos {:x i :y j})))))
+      (let [pos {:x i :y j}]
+        (if (and (map-check-valid-position m i j) (not (player-is-any-clone-in-position pos c)))
+          (table.insert p.clonepos pos)))))
+          
+    (set p.ix (. (. p.clonepos 1) :x))
+    (set p.iy (. (. p.clonepos 1) :y)))
 
 (fn player-draw-clone [p m]
   (each [k e (ipairs p.clonepos)]
@@ -103,7 +135,7 @@
   (sfx 14 72 30 0 8 1)
   (set p.state :IDLE))
 
-(fn player-update [p m]
+(fn player-update [p m c]
   (var tx (* p.mx 8))
   (var ty (* p.my 8))
 
@@ -119,16 +151,24 @@
           (when (btnp 1) (player-move-to p :DOWN m))
           (when (btnp 2) (player-move-to p :LEFT m))
           (when (btnp 3) (player-move-to p :RIGHT m))
-          (when (btnp 4) (player-start-cloning p m)))
+          (when (btnp 4) (player-start-cloning p m c)))
       (= p.state :CLONING)
         (let []
+          (when (btnp 0) (player-move-indicator p :UP m))
+          (when (btnp 1) (player-move-indicator p :DOWN m))
+          (when (btnp 2) (player-move-indicator p :LEFT m))
+          (when (btnp 3) (player-move-indicator p :RIGHT m))
           (when (btnp 4) (player-start-idle p m))))
   )
 
 (fn player-draw [p m]
   (entity-draw p.entity)
   
-  (when (= p.state :CLONING) (player-draw-clone p m)))
+  (when (= p.state :CLONING)
+    (player-draw-clone p m)
+    (set playerindicator.x (* p.ix 8))
+    (set playerindicator.y (* p.iy 8))
+    (entity-draw playerindicator)))
 
 (fn player-indicator-draw [pi p]
   (var x p.entity.x)
@@ -141,7 +181,7 @@
 
 (set stategame.data.map (map-create 0 0 {:x 8 :y 8 } {:x 19 :y 8}))
 (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y player-entity))
-(set stategame.data.playerindicator (entity-create 0.0 0.0 [(sprite-create [258] 18 1)]))
+(set stategame.data.clones [stategame.data.player])
 
 (fn hud-draw [p m]
   (rect 0 0 53 15 15)
@@ -154,13 +194,14 @@
 (set stategame.update (fn []
   (cls 0)
 
-  (player-update stategame.data.player stategame.data.map)
+  (player-update stategame.data.player stategame.data.map stategame.data.clones)
 
-  (map-draw stategame.data.map)  
-  (player-draw stategame.data.player stategame.data.map)
+  (map-draw stategame.data.map)
+  (each [k v (ipairs stategame.data.clones)]
+    (player-draw v stategame.data.map))
 
   (when (= stategame.data.player.state :IDLE)
-    (player-indicator-draw stategame.data.playerindicator stategame.data.player))
+    (player-indicator-draw playerindicator stategame.data.player))
   
   (hud-draw stategame.data.player stategame.data.map)))
 
