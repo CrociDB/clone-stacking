@@ -52,7 +52,7 @@
 (var player-pick-sprite (sprite-create [260 262] 20 1))
 (var playerindicator (entity-create 0.0 0.0 [(sprite-create [258] 18 1)]))
 
-(var player-entity (entity-create 0.0 0.0 [ (sprite-create [288 290] 18 1)
+(fn player-entity [] (entity-create 0.0 0.0 [ (sprite-create [288 290] 18 1)
                                         (sprite-create [292 294] 18 1)
                                         (sprite-create [296 298] 18 1)
                                         (sprite-create [300 302] 18 1)]))
@@ -127,6 +127,12 @@
     (set p.ix (. (. p.clonepos 1) :x))
     (set p.iy (. (. p.clonepos 1) :y)))
 
+(fn player-clone-now [p m c setplayer]
+  (set p.state :INACTIVE)
+  (var newp (player-create p.ix p.iy (player-entity)))
+  (setplayer newp))
+
+
 (fn player-draw-clone [p m]
   (each [k e (ipairs p.clonepos)]
     (sprite-draw player-pick-sprite (* (+ m.mx e.x) 8) (* (+ m.my e.y) 8))))
@@ -135,7 +141,7 @@
   (sfx 14 72 30 0 8 1)
   (set p.state :IDLE))
 
-(fn player-update [p m c]
+(fn player-update [p m c setplayer]
   (var tx (* p.mx 8))
   (var ty (* p.my 8))
 
@@ -158,7 +164,8 @@
           (when (btnp 1) (player-move-indicator p :DOWN m))
           (when (btnp 2) (player-move-indicator p :LEFT m))
           (when (btnp 3) (player-move-indicator p :RIGHT m))
-          (when (btnp 4) (player-start-idle p m))))
+          (when (btnp 4) (player-clone-now p m c setplayer))
+          (when (btnp 5) (player-start-idle p m))))
   )
 
 (fn player-draw [p m]
@@ -180,7 +187,7 @@
   (entity-draw pi))
 
 (set stategame.data.map (map-create 0 0 {:x 8 :y 8 } {:x 19 :y 8}))
-(set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y player-entity))
+(set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y (player-entity)))
 (set stategame.data.clones [stategame.data.player])
 
 (fn hud-draw [p m]
@@ -194,7 +201,12 @@
 (set stategame.update (fn []
   (cls 0)
 
-  (player-update stategame.data.player stategame.data.map stategame.data.clones)
+  (player-update  stategame.data.player 
+                  stategame.data.map 
+                  stategame.data.clones
+                  (lambda [newp] 
+                    (table.insert stategame.data.clones newp)
+                    (set stategame.data.player newp)))
 
   (map-draw stategame.data.map)
   (each [k v (ipairs stategame.data.clones)]
