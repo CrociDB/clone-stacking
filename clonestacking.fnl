@@ -11,6 +11,10 @@
 
 ;; LIB FUNCTIONS
 
+;; Math
+(fn lerp [v0 v1 t]
+  (+ (* t v1) (* v0 (- 1 t))))
+
 ;; Sprite
 (fn sprite-create [idlist speed basecolor]
   {:idlist idlist :speed speed :basecolor basecolor})
@@ -24,7 +28,7 @@
   {:x x :y y :sprites spritelist :sprite 1})
 
 (fn entity-draw [entity]
-   (sprite-draw (. entity.sprites entity.sprite) entity.x entity.y))
+   (sprite-draw (. entity.sprites entity.sprite) (math.ceil entity.x) (math.ceil entity.y)))
 
 ;; Map
 (fn map-create [mx my player goal]
@@ -45,7 +49,7 @@
 
 ;; Game
 
-(var player-entity (entity-create 0 0 [ (sprite-create [288 290] 18 1)
+(var player-entity (entity-create 0.0 0.0 [ (sprite-create [288 290] 18 1)
                                         (sprite-create [292 294] 18 1)
                                         (sprite-create [296 298] 18 1)
                                         (sprite-create [300 302] 18 1)]))
@@ -53,7 +57,7 @@
 (var stategame {:data {} :reset (fn []) :update (fn [])})
 
 (fn player-create [mx my entity]
-  {:mx mx :my my :entity entity :state 0})
+  {:mx mx :my my :entity entity :state :IDLE})
 
 (fn player-move-to [p dir m]
   (var mx (+ m.mx p.mx))
@@ -75,10 +79,10 @@
     (set p.my my)))
 
 (fn player-update [p m]
-  (set p.entity.x (* p.mx 8))
-  (set p.entity.y (* p.my 8))
+  (set p.entity.x (lerp p.entity.x (* p.mx 8) 0.5))
+  (set p.entity.y (lerp p.entity.y (* p.my 8) 0.5))
   
-  (if (= p.state 0)
+  (if (= p.state :IDLE)
     (let []
       (when (btnp 0) (player-move-to p :UP m))
       (when (btnp 1) (player-move-to p :DOWN m))
@@ -97,7 +101,8 @@
   (rect 200 0 240 15 15)
   (spr 288 202 0 0 1 0 0 2 2)
   (print "Level 01" 5 5 13)
-  (print "001" 220 5 13))
+  (print "001" 220 5 13)
+  (print "X Clone" 198 25 13))
 
 (set stategame.update (fn []
   (cls 0)
