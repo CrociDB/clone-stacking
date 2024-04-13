@@ -93,8 +93,18 @@
 (fn player-draw [p]
   (entity-draw p.entity))
 
+(fn player-indicator-draw [pi p]
+  (var x p.entity.x)
+  (var y (- p.entity.y 12 (* (math.sin (* time .3)) 2)))
+
+  (set pi.x (lerp pi.x x .8))
+  (set pi.y (lerp pi.y y .8))
+
+  (entity-draw pi))
+
 (set stategame.data.map (map-create 0 0 {:x 8 :y 8 } {:x 19 :y 8}))
 (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y player-entity))
+(set stategame.data.playerindicator (entity-create 0.0 0.0 [(sprite-create [258] 18 1)]))
 
 (fn hud-draw [p m]
   (rect 0 0 53 15 15)
@@ -111,6 +121,7 @@
 
   (map-draw stategame.data.map)  
   (player-draw stategame.data.player)
+  (player-indicator-draw stategame.data.playerindicator stategame.data.player)
   
   (hud-draw stategame.data.player stategame.data.map)))
 
@@ -142,6 +153,10 @@
 ;; </TILES>
 
 ;; <SPRITES>
+;; 002:0000000000000000000000000000000000000000000000000000333300003222
+;; 003:0000000000000000000000000000000000000000000000003333000022230000
+;; 018:0000032200000032000000030000000000000000000000000000000000000000
+;; 019:2230000023000000300000000000000000000000000000000000000000000000
 ;; 032:000000000000ff00000fdcf000fdddcf000fddf00000ffdf0000fddd000fdddd
 ;; 033:0000000000000000000000000000000000000000fff00000ddcf0000dddcf000
 ;; 034:0000ff00000fdcf000fdddcf000fddf00000ffdf0000fddd000fdddd00fddd2d
