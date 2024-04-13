@@ -62,7 +62,14 @@
 (fn player-create [mx my entity]
   {:mx mx :my my :entity entity :state :IDLE :clonepos [] :ix 0 :iy 0})
 
-(fn player-move-to [p dir m]
+(fn player-is-any-clone-in-position [pos c]
+  (var res 0)
+  (each [k v (ipairs c)]
+    (when (and (= v.mx pos.x) (= v.my pos.y))
+      (set res (+ 1 res))))
+  (> res 0))
+
+(fn player-move-to [p dir m c]
   (var mx p.mx)
   (var my p.my)
 
@@ -76,7 +83,7 @@
       (= dir :LEFT)  (set p.entity.sprite 3)
       (= dir :RIGHT)  (set p.entity.sprite 2))
   
-  (when (map-check-valid-position m mx my)
+  (when (and (map-check-valid-position m mx my) (not (player-is-any-clone-in-position {:x mx :y my} c)))
     (sfx 12 35 20 0 8 1)
     (set p.mx mx)
     (set p.my my)))
@@ -101,12 +108,6 @@
     (sfx 12 55 20 0 8 1)
     (set p.ix mx)
     (set p.iy my)))
-
-(fn player-is-any-clone-in-position [pos c]
-  (var res 0)
-  (each [k v (ipairs c)]
-    (set res (+ (if (and (= v.mx pos.x) (= v.my pos.y)) 1 0))))
-  (> res 0))
 
 (fn player-start-cloning [p m c]
   (sfx 13 75 30 0 8 1)
@@ -153,10 +154,10 @@
 
   (if (= p.state :IDLE)
         (let []
-          (when (btnp 0) (player-move-to p :UP m))
-          (when (btnp 1) (player-move-to p :DOWN m))
-          (when (btnp 2) (player-move-to p :LEFT m))
-          (when (btnp 3) (player-move-to p :RIGHT m))
+          (when (btnp 0) (player-move-to p :UP m c))
+          (when (btnp 1) (player-move-to p :DOWN m c))
+          (when (btnp 2) (player-move-to p :LEFT m c))
+          (when (btnp 3) (player-move-to p :RIGHT m c))
           (when (btnp 4) (player-start-cloning p m c)))
       (= p.state :CLONING)
         (let []
