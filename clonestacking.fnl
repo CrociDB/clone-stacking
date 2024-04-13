@@ -45,10 +45,10 @@
 
 ;; Game
 
-(var player-entity (entity-create 0 0 [ (sprite-create [288 290] 15 1)
-                                        (sprite-create [292 294] 15 1)
-                                        (sprite-create [296 298] 15 1)
-                                        (sprite-create [300 302] 15 1)]))
+(var player-entity (entity-create 0 0 [ (sprite-create [288 290] 18 1)
+                                        (sprite-create [292 294] 18 1)
+                                        (sprite-create [296 298] 18 1)
+                                        (sprite-create [300 302] 18 1)]))
 
 (var stategame {:data {} :reset (fn []) :update (fn [])})
 
@@ -91,13 +91,22 @@
 (set stategame.data.map (map-create 0 0 {:x 8 :y 8 } {:x 19 :y 8}))
 (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y player-entity))
 
+(fn hud-draw [p m]
+  (rect 0 0 53 15 15)
+  (rect 200 0 240 15 15)
+  (spr 288 202 0 0 1 0 0 2 2)
+  (print "Level 01" 5 5 13)
+  (print "001" 220 5 13))
+
 (set stategame.update (fn []
   (cls 0)
 
   (player-update stategame.data.player stategame.data.map)
 
   (map-draw stategame.data.map)  
-  (player-draw stategame.data.player)))
+  (player-draw stategame.data.player)
+  
+  (hud-draw stategame.data.player stategame.data.map)))
 
 ;; INITIALIZATION 
 
