@@ -79,9 +79,15 @@
     (set p.my my)))
 
 (fn player-update [p m]
-  (set p.entity.x (lerp p.entity.x (* p.mx 8) 0.5))
-  (set p.entity.y (lerp p.entity.y (* p.my 8) 0.5))
-  
+  (var tx (* p.mx 8))
+  (var ty (* p.my 8))
+
+  (set p.entity.x (lerp p.entity.x tx .3))
+  (set p.entity.y (lerp p.entity.y ty .3))
+
+  (when (<= (math.abs (- p.entity.x tx)) .2) (set p.entity.x tx))
+  (when (<= (math.abs (- p.entity.y ty)) .2) (set p.entity.y ty))
+
   (if (= p.state :IDLE)
     (let []
       (when (btnp 0) (player-move-to p :UP m))
@@ -97,8 +103,8 @@
   (var x p.entity.x)
   (var y (- p.entity.y 12 (* (math.sin (* time .3)) 2)))
 
-  (set pi.x (lerp pi.x x .8))
-  (set pi.y (lerp pi.y y .8))
+  (set pi.x (lerp pi.x x .4))
+  (set pi.y (lerp pi.y y .4))
 
   (entity-draw pi))
 
