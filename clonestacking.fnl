@@ -47,11 +47,31 @@
 (var stategame {:data {} :reset (fn []) :update (fn [])})
 
 (fn player-create [mx my entity]
-  {:mx mx :my my :entity entity})
+  {:mx mx :my my :entity entity :state 0})
+
+(fn player-move-to [p dir]
+  (var mx p.mx)
+  (var my p.my)
+
+  (if (= dir :UP)   (set my (- my 2))
+      (= dir :DOWN)  (set my (+ my 2))
+      (= dir :LEFT)  (set mx (- mx 2))
+      (= dir :RIGHT)  (set mx (+ mx 2)))
+
+  (set p.mx mx)
+  (set p.my my))
 
 (fn player-update [p m]
   (set p.entity.x (* p.mx 8))
-  (set p.entity.y (* p.my 8)))
+  (set p.entity.y (* p.my 8))
+  
+  (if (= p.state 0)
+    (let []
+      (when (btnp 0) (player-move-to p :UP))
+      (when (btnp 1) (player-move-to p :DOWN))
+      (when (btnp 2) (player-move-to p :LEFT))
+      (when (btnp 3) (player-move-to p :RIGHT)))
+  ))
 
 (fn player-draw [p]
   (entity-draw p.entity))
