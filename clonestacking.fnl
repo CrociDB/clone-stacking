@@ -398,7 +398,16 @@
       (spr 288 202 0 0 1 0 0 2 2)
       (print (string.gsub m.name "%s+" "") 5 5 13)
       (print "001" 220 5 13)
-      (print "X Clone" 198 25 13))))
+
+      (if 
+        (= p.state :IDLE)
+          (let []
+            (print "A Clone" 198 25 13))
+        (= p.state :CLONING)
+          (let []
+            (print "A Clone" 198 25 13)
+            (print "B Cancel" 198 35 13))
+      ))))
 
 (set stategame.start (fn []
   (set stategame.data.finished false)
