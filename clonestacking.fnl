@@ -121,9 +121,10 @@
 
 (fn map-draw-lock-keys [m lock-sprite key-sprite]
   (each [k v (ipairs m.locks)]
-    (var floating (* (math.sin (* time .1)) 3))
-    (sprite-draw lock-sprite (* 8 v.x) (* 8 v.y))
-    (sprite-draw key-sprite (* 8 v.kx) (+ (* 8 v.ky) floating -1))))
+    (when v.locked
+      (var floating (* (math.sin (* time .1)) 3))
+      (sprite-draw lock-sprite (* 8 v.x) (* 8 v.y))
+      (sprite-draw key-sprite (* 8 v.kx) (+ (* 8 v.ky) floating -1)))))
 
 (fn map-get-tile [m x y]
   (var mx (+ m.mx x))
@@ -132,7 +133,13 @@
 
 (fn map-check-valid-position [m x y allowed]
   (if (and (>= x 0) (>= y 0) (< x 30) (< y 17)) 
-    (contains allowed (map-get-tile m x y))
+    (if (contains allowed (map-get-tile m x y))
+      (let []
+        ;; Check for locks
+        (var anylock false)
+        (each [k v (ipairs m.locks)]
+          (set anylock (or anylock (and (= v.x x) (= v.y y) v.locked))))
+        (not anylock)))
     false))
 
 ;; GAME MAPS DATA
@@ -190,7 +197,9 @@
       (= dir :RIGHT)  (set p.entity.sprite 2))
   
   (var allowed-to-move [2 4 6 8])
-  (when (and (map-check-valid-position m mx my allowed-to-move) (not (player-is-any-clone-in-position {:x mx :y my} c)))
+  (when (and 
+          (map-check-valid-position m mx my allowed-to-move)
+          (not (player-is-any-clone-in-position {:x mx :y my} c)))
     (sfx 12 35 20 0 8 1)
     (set p.mx mx)
     (set p.my my)))
@@ -308,6 +317,16 @@
         (co-wait-time 20))
       (nextlevel))))
 
+(fn player-collect-key [p k]
+  (set k.locked false)
+  (set p.entity.sprite 1)
+  (sfx 20 48 50 2 15 .1)
+  (co-start (lambda [] 
+    (screen-shake 15 1)
+    (ps-create (+ 8 (* 8 k.kx)) (+ 8 (* 8 k.ky)) 12 50 50 .2)
+    (ps-create (+ 8 (* 8 k.x)) (+ 8 (* 8 k.y)) 3 150 50 .3)
+    (co-wait-time 20))))
+
 (fn player-update [pl m c setplayer killcallback nextlevel]
   (var p pl)
   (var tx (* p.mx 8))
@@ -318,6 +337,11 @@
 
   (when (<= (math.abs (- p.entity.x tx)) .2) (set p.entity.x tx))
   (when (<= (math.abs (- p.entity.y ty)) .2) (set p.entity.y ty))
+
+  ;; Check for keys collection
+  (each [k v (ipairs m.locks)]
+    (when (and (= v.kx p.mx) (= v.ky p.my) v.locked)
+      (player-collect-key p v)))
 
   (if (= p.state :IDLE)
         (let [tile (map-get-tile m p.mx p.my)]
@@ -552,6 +576,7 @@
 ;; 017:260036003670368036802690260d160d167d067d067d067a067a160a160a260a260a367a466046605669660976089608a608b608c668d668e668f608475000000000
 ;; 018:17000700070007a01700170027002700479057005700770087009700a700b700c790c700d700d700d700d700e700e790e700f700f700f700f700f700400000000000
 ;; 019:4200420032002200220012701270127002700270027002c002c002c002c002c002c012f012f022f032f042f042f052f062f062f082f092f0d2f0f2f0304000000000
+;; 020:4200420032002200220012501250125002500250025002500250025002500250029012901290229032904290429052906290629082909290d290f290304000000000
 ;; </SFX>
 
 ;; <TRACKS>
