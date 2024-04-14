@@ -10,7 +10,10 @@
 ;; Globals
 
 (var time 0)
-(var level 1)
+
+(var level (pmem 0))
+(when (= level 0) (set level 1))
+
 (var shake 0)
 (var shake-amount 0)
 (fn screen-shake [time strength] 
@@ -499,9 +502,11 @@
                       stategame.data.player)
                   (lambda [] ;; NEW LEVEL
                     (set level (+ 1 level))
+                    (pmem 0 level)
                     (if (>= level (length LEVELS))
                       (let [] 
                         (set level 1)
+                        (pmem 0 level)
                         (setstate statemenu))
                       (stategame.start))))
 
