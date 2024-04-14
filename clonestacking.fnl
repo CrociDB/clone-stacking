@@ -10,7 +10,7 @@
 ;; Globals
 
 (var time 0)
-(var level 5)
+(var level 3)
 (var shake 0)
 (var shake-amount 0)
 (fn screen-shake [time strength] 
@@ -146,12 +146,11 @@
 ;; GAME MAPS DATA
 
 (var LEVELS [
-  (lambda [] (map-create "    Level 1    " 0 1 {:x 8 :y 8 } [] 0))
-  (lambda [] (map-create "    Level 2    " 1 1 {:x 8 :y 8 } [] 1))
-  (lambda [] (map-create "    Level 3    " 2 1 {:x 8 :y 10 } [] 2))
-  (lambda [] (map-create "    Level 4    " 3 1 {:x 2 :y 14 } [] 4))
-  (lambda [] (map-create "    Level 5    " 4 1 {:x 8 :y 8 } [{:x 18 :y 8 :kx 12 :ky 6 :locked true}] 1))
-  (lambda [] (map-create "    Level 6    " 5 1 {:x 8 :y 8 } [{:x 4 :y 8 :kx 20 :ky 8 :locked true}] 1))
+  (lambda [] (map-create "   Level 01    " 0 1 {:x 8 :y 8 } [] 0))
+  (lambda [] (map-create "   Level 02    " 1 1 {:x 8 :y 8 } [] 1))
+  (lambda [] (map-create "   Level 03    " 2 1 {:x 8 :y 10 } [] 2))
+  (lambda [] (map-create "   Level 04    " 3 1 {:x 2 :y 14 } [] 4))
+  (lambda [] (map-create "   Level 05    " 4 1 {:x 8 :y 8 } [{:x 18 :y 8 :kx 12 :ky 6 :locked true}] 1))  (lambda [] (map-create "    Level 06    " 5 1 {:x 8 :y 8 } [{:x 4 :y 8 :kx 20 :ky 8 :locked true}] 1))
 ])
 
 ;; GAME STATES
@@ -401,13 +400,13 @@
       (rect 30 40 180 50 15)
       (print m.name 30 60 12 true 2))
     (let []
-      (rect 0 0 53 15 15)
-      (print (string.gsub m.name "%s+" "") 5 5 13)
+      (rect 0 0 54 15 15)
+      (print (string.gsub m.name "^%s+" "") 5 5 13)
 
       (when (> m.maxclones 0)
-        (rect 200 0 240 15 15)
-        (spr 288 202 0 0 1 0 0 2 2)
-        (print m.maxclones 220 5 13)
+        (rect 210 0 240 15 15)
+        (spr 288 212 0 0 1 0 0 2 2)
+        (print m.maxclones 230 5 13)
 
         (if 
           (= p.state :IDLE)
