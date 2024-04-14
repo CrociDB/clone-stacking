@@ -159,7 +159,6 @@
     false))
 
 ;; GAME MAPS DATA
-(set level 11)
 (var LEVELS [
   (lambda [] (map-create "Level 01" "The green flag is your goal!" 0 1 {:x 8 :y 8 } [] [] 0))
   (lambda [] (map-create "Level 02" "Remember to summon your clone with A.\nYou can die now." 1 1 {:x 8 :y 8 } [] [] 1))
@@ -226,7 +225,6 @@
           (map-check-valid-position m mx my allowed-to-move)
           (not (player-is-any-clone-in-position {:x mx :y my} c)))
     (sfx 12 35 20 0 8 1)
-    (trace (.. mx " " my))
     (set p.mx mx)
     (set p.my my)))
 
@@ -509,7 +507,7 @@
                   (lambda [] ;; NEW LEVEL
                     (set level (+ 1 level))
                     (pmem 0 level)
-                    (if (>= level (length LEVELS))
+                    (if (> level (length LEVELS))
                       (let [] 
                         (set level 1)
                         (pmem 0 level)
@@ -583,7 +581,7 @@
 
 ;; INITIALIZATION 
 
-(setstate stategame)
+(setstate statemenu)
 
 (fn _G.TIC []
   (set time (+ time 1))
