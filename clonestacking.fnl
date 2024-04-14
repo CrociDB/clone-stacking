@@ -355,11 +355,17 @@
                     (table.insert stategame.data.clones newp)
                     (set stategame.data.player newp))
                   (lambda []
-                    (var p (. stategame.data.clones (- (length stategame.data.clones) 1)))
-                    (table.remove stategame.data.clones)
-                    (set p.state :IDLE)
-                    (set stategame.data.player p)
-                    p))
+                    (if (= (length stategame.data.clones) 1) 
+                      (let []
+                        ;; RESTART
+                        (stategame.start)
+                      )
+                      (let []
+                        (var p (. stategame.data.clones (- (length stategame.data.clones) 1)))
+                        (table.remove stategame.data.clones)
+                        (set p.state :IDLE)
+                        (set stategame.data.player p)
+                        p))))
 
   (map-draw stategame.data.map)
   (each [k v (ipairs stategame.data.clones)]
