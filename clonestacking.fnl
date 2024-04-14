@@ -26,6 +26,35 @@
   (each [k v (ipairs ls)] (when (= v e) (set occurences (+ occurences 1))))
   (> occurences 0))
 
+;; Coroutines
+(var coroutines {:coroutines [] :remove []})
+
+(fn co-remove []
+  (each [k v (ipairs coroutines.remove)]
+    (table.remove coroutines.coroutines v))
+  (set coroutines.remove []))
+
+(fn co-start [routine]
+  (var r (coroutine.create routine))
+  (coroutine.resume r)
+  (table.insert coroutines.coroutines r))
+
+(fn co-update []
+  (each [k v (ipairs coroutines.coroutines)]
+    (if (= (coroutine.status v) "dead")
+        (let [] 
+          (table.insert coroutines.remove k))
+        (= (coroutine.status v) "suspended")
+        (let []
+          (coroutine.resume v))))
+  (co-remove))
+
+(fn co-wait-time [s]
+  (var starttime time)
+  (while (< (- time starttime) s)
+    (coroutine.yield)))
+
+
 ;; Sprite
 (fn sprite-create [idlist speed basecolor]
   {:idlist idlist :speed speed :basecolor basecolor})
@@ -264,6 +293,8 @@
 
 (fn _G.TIC []
   (set time (+ time 1))
+
+  (co-update)
 
   ; screen shake
   (when (> shake 0)
