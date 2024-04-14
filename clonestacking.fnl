@@ -155,13 +155,17 @@
 ;; GAME STATES
 
 (var game {:update (fn []) :start (fn [])})
+(var stategame {:data {} :start (fn []) :update (fn [])})
+(var statemenu {:data {} :start (fn []) :update (fn [])})
+(fn setstate [state]
+  (set game.update state.update)
+  (set game.start state.start)
+  (game.start))
 
 ;; Game
-
 (var player-pick-sprite (sprite-create [260 262] 20 1))
 (var player-lock-sprite (sprite-create [264] 20 1))
 (var player-key-sprite (sprite-create [266] 20 1))
-
 
 (var playerindicator (entity-create 0.0 0.0 [(sprite-create [258] 18 1)]))
 
@@ -169,8 +173,6 @@
                                         (sprite-create [292 294] 18 1)
                                         (sprite-create [296 298] 18 1)
                                         (sprite-create [300 302] 18 1)]))
-
-(var stategame {:data {} :reset (fn []) :update (fn [])})
 
 (fn player-create [mx my entity]
   {:mx mx :my my :entity entity :state :IDLE :clonepos [] :ix 0 :iy 0})
@@ -442,12 +444,53 @@
   
   (hud-draw stategame.data.player stategame.data.map)))
 
+;; MENU
+(fn start-game [] 
+  (set statemenu.data.active false)
+
+  (screen-shake 40 1)
+
+  (co-start (lambda []
+    (sfx 20 48 30 2 15 .1)
+    (co-wait-time 50)
+
+    (set statemenu.data.finished true)
+    (for [i 0 260 10]
+      (rect 0 0 i 136 0)
+      (co-wait-time 1))
+
+
+    (setstate stategame))))
+
+(set statemenu.start (lambda [] 
+  (set statemenu.data.active true)
+  (set statemenu.data.finished false)))
+(set statemenu.update (lambda [] 
+  (when (not statemenu.data.finished)
+    (rect 0 0 240 136 8)
+
+    (var height (* (math.sin (math.sin (math.cos (* time .04)))) 10))
+    (var side (* (math.sin (* time .01)) 10))
+
+    (spr 320 5 (+ height 20) 0 2 0 0 8 8)
+    (print "CLONE" (+ 70 side) 25 14 true 3)
+    (print "CLONE" (+ 68 side) 23 12 true 3)
+
+    (print "STACKING" (- 88 side) 45 14 true 3)
+    (print "STACKING" (- 86 side) 43 12 true 3)
+
+    (when statemenu.data.active true
+      (var color 
+        (if (< (% (* time .1) 8) 2) 12 13))
+      (print "Press A to Play" 154 93 color true 1 true)
+      (when (btnp 4) (start-game)))
+
+    (print "a game by Bruno Croci" 154 126 9 true 1 true))
+))
+
 ;; INITIALIZATION 
 
-(set game.update stategame.update)
-(set game.start stategame.start)
-
-(game.start)
+(setstate statemenu)
 
 (fn _G.TIC []
   (set time (+ time 1))
@@ -536,6 +579,60 @@
 ;; 061:ddddcf00eddddf00dddddf00ddddf000dddf0000fff000000000000000000000
 ;; 062:00fddddd00fddddd00feddde000feddd0000fedd00000fff0000000000000000
 ;; 063:dddddf00eddddf00dddddf00ddddf000dddf0000fff000000000000000000000
+;; 064:00000000000000000000000e00000eed0000eedd000eeddd00eedddd0eeddddd
+;; 065:0000000000eeeee0eeeeddeeddddddddddccccddddccccccddccccccdddddddd
+;; 066:0000000000000000eee00000ddee0000ddde0000ccdde000ccddee00cccdde00
+;; 080:0edddddd0eddddddedddddddedddddddedddddddedddddddedddddddeddddddd
+;; 081:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 082:ccccdee0dcccdde0ddccdddeddccdddeddccddeeddccdddeddccddddddddddde
+;; 083:00000000000000000000000000eeeeeeeeedddddedddddddedddddddeddddddd
+;; 084:000000000000000000000000eeee0000ddddeee0dddddddedddddddddddddddd
+;; 085:0000000000000000000000000000000000000000ee000000ddeeeeeedddddddd
+;; 086:000000000000000000000000000000000000000000000000e0000000deeeee00
+;; 096:edddddddedddddddedddddddeedddddd0edddddd00eedddd00eedddd00edeedd
+;; 097:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 098:dddddddeddddddeeddddddeddddddeddddddeddddddeedddddeeddddeeeddddd
+;; 099:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 100:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 101:ddddddddddddddccddddddccdddddddddddddddddddddddddddddddddddddddd
+;; 102:dddddeeeccccddddcccccdddddcccccddddcccccdddddcccddddddccdddddddc
+;; 103:00000000ee000000dde00000ddde0000ddde0000cddde000ccdde000ccddee00
+;; 112:00eddeed00edddde00eddddd00eddddd00eddddd00eddddd00eddddd00eddddd
+;; 113:dddddeeeeeeeeedddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 114:eddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 115:ddd22dddd222222dd222222d2222222222222222d222222dd222222dddd22ddd
+;; 116:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 117:dddddd22dddd2222dddd2222ddd22222ddd22222dddd2222dddd2222dddddd22
+;; 118:dddddddd22dddddd22dddddd222ddddd222ddddd22dddddd22dddddddddddddd
+;; 119:ccddde00cccdde00cccdde00dcccde00dcccde00ddccde00ddddde00ddddde00
+;; 128:00eddddd00eddddd00eddddd00eddddd00eddddd00eedddd000edddd000edddd
+;; 129:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 130:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 131:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 132:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 133:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 134:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 135:ddddde00ddddde00ddddde00ddddde00ddddde00ddddde00ddddde00ddddde00
+;; 144:000edddd0000eddd0000eddd0000eedd00000edd000000ed0000000e00000000
+;; 145:ddddddddddddddddddddddddddddddddddddddddddddddddddddddddeddddddd
+;; 146:ddddddddddeeddddddeeedddddeeeddddddeeddddddeeeddddddeeeddddddeee
+;; 147:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 148:ddddddddddddeeeeddddeeeedddddddddddddddddddddddddddddddddddddddd
+;; 149:ddddddddeeddddddeedddddddddddddddddddddddddddddddddddddddddddddd
+;; 150:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+;; 151:dddde000dddde000ddde0000ddde0000dde00000dde00000dee00000de000000
+;; 161:eedddddd00eedddd000eeddd00000eed000000ee000000000000000000000000
+;; 162:ddddddeeddddddeeddddddddddddddddedddddddeeeddddd00eedddd0000eeed
+;; 163:eeddddddeeeeddddeeeeeeddddeeeeeedddddeeedddddddddddddddddddddddd
+;; 164:ddddddddddddddddddddddddeeeeeedeeeeeeeeedddddeeedddddddddddddddd
+;; 165:ddddddddddddddddddddddddeeedddddeeedddddeddddddddddddddddddddddd
+;; 166:dddddddddddddddeddddddeedddddee0ddddee00dddde000ddee0000dee00000
+;; 167:ee000000e0000000000000000000000000000000000000000000000000000000
+;; 178:000000ee00000000000000000000000000000000000000000000000000000000
+;; 179:edddddddeedddddd0eeedddd000eeeee00000000000000000000000000000000
+;; 180:ddddddddddddddddddddddddeeeeeeee00000000000000000000000000000000
+;; 181:ddddddddddddddeedddeee00eee0000000000000000000000000000000000000
+;; 182:ee000000e0000000000000000000000000000000000000000000000000000000
 ;; </SPRITES>
 
 ;; <MAP>
