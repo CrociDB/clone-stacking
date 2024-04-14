@@ -317,6 +317,12 @@
           50
           (+ .2 (* (math.random) 2)))
         (co-wait-time 20))
+
+      (for [i 0 260 10]
+        (rect 0 0 i 136 0)
+        (co-wait-time 1))
+      (set stategame.data.finished true)
+      (cls 0)
       (nextlevel))))
 
 (fn player-collect-key [p k]
@@ -395,6 +401,7 @@
       (print "X Clone" 198 25 13))))
 
 (set stategame.start (fn []
+  (set stategame.data.finished false)
   (set stategame.data.map ((. LEVELS level)))
   (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y (player-entity)))
   (set stategame.data.clones [stategame.data.player])
@@ -434,15 +441,16 @@
                     (set level (+ 1 level))
                     (stategame.start)))
 
-  (map-draw stategame.data.map)
-  (map-draw-lock-keys stategame.data.map player-lock-sprite player-key-sprite)
-  (each [k v (ipairs stategame.data.clones)]
-    (player-draw v stategame.data.map))
+  (when (not stategame.data.finished)
+    (map-draw stategame.data.map)
+    (map-draw-lock-keys stategame.data.map player-lock-sprite player-key-sprite)
+    (each [k v (ipairs stategame.data.clones)]
+      (player-draw v stategame.data.map))
 
-  (when (= stategame.data.player.state :IDLE)
-    (player-indicator-draw playerindicator stategame.data.player))
-  
-  (hud-draw stategame.data.player stategame.data.map)))
+    (when (= stategame.data.player.state :IDLE)
+      (player-indicator-draw playerindicator stategame.data.player))
+    
+    (hud-draw stategame.data.player stategame.data.map))))
 
 ;; MENU
 (fn start-game [] 
@@ -497,7 +505,7 @@
 
 ;; INITIALIZATION 
 
-(setstate statemenu)
+(setstate stategame)
 
 (fn _G.TIC []
   (set time (+ time 1))
