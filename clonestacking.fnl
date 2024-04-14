@@ -251,15 +251,15 @@
     (for [i (- x 4) (+ x 4) 2]
       (for [j (- y 4) (+ y 4) 2]
         (let [pos {:x i :y j}]
-          (if (and (map-check-valid-position m i j allowed-cloning) (not (player-is-any-clone-in-position pos c)))
+          (if (map-check-valid-position m i j allowed-cloning)
             (table.insert p.clonepos pos)))))
             
-      (set p.ix (. (. p.clonepos 1) :x))
-      (set p.iy (. (. p.clonepos 1) :y))))
+      (set p.ix p.mx)
+      (set p.iy p.my)))
 
 (fn player-clone-now [p m c setplayer]
   ;; SET IF I CAN CLONE HERE AND NUMBER OF CLONES AVAILABLE
-  (when (> m.maxclones 0)
+  (when (and (> m.maxclones 0) (not (player-is-any-clone-in-position {:x p.ix :y p.iy} c)))
     (set p.state :INACTIVE)
 
     (set m.maxclones (- m.maxclones 1))
@@ -279,9 +279,10 @@
     
     (ps-create (+ 8 x) (+ 8 y) 12 100 40 .5)))
 
-(fn player-draw-clone [p m]
+(fn player-draw-clone [p m c]
   (each [k e (ipairs p.clonepos)]
-    (sprite-draw player-pick-sprite (* e.x 8) (* e.y 8))))
+    (when (not (player-is-any-clone-in-position e c))
+      (sprite-draw player-pick-sprite (* e.x 8) (* e.y 8)))))
 
 (fn player-start-idle [p m]
   (sfx 14 72 30 0 8 1)
@@ -376,11 +377,11 @@
           (when (btnp 4) (player-clone-now p m c setplayer))
           (when (btnp 5) (player-start-idle p m)))))
 
-(fn player-draw [p m]
+(fn player-draw [p m c]
   (entity-draw p.entity)
   
   (when (= p.state :CLONING)
-    (player-draw-clone p m)
+    (player-draw-clone p m c)
     (set playerindicator.x (* p.ix 8))
     (set playerindicator.y (* p.iy 8))
     (entity-draw playerindicator)))
@@ -463,7 +464,7 @@
     (map-draw stategame.data.map)
     (map-draw-lock-keys stategame.data.map player-lock-sprite player-key-sprite)
     (each [k v (ipairs stategame.data.clones)]
-      (player-draw v stategame.data.map))
+      (player-draw v stategame.data.map stategame.data.clones))
 
     (when (= stategame.data.player.state :IDLE)
       (player-indicator-draw playerindicator stategame.data.player))
