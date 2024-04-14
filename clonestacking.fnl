@@ -54,6 +54,31 @@
   (while (< (- time starttime) s)
     (coroutine.yield)))
 
+;; Particles
+
+(var particles [])
+(fn ps-create [x y amount lifetime speed]
+  (var ps {:x x :y y :particles [] :lifetime lifetime})
+  (for [i 0 amount]
+    (var p {
+            :x (+ x (math.random -3 3))
+            :y (+ y (math.random -3 3))
+            :dir (math.random 0 360)
+            :speed (+ speed (* 2 (math.random)))})
+    (table.insert ps.particles p))
+  (table.insert particles ps))
+
+(fn ps-update []
+  (var rp [])
+  (each [k v (ipairs particles)]
+    (each [pk pv (ipairs v.particles)]
+      (set pv.x (+ pv.x (* pv.speed (math.cos pv.dir))))
+      (set pv.y (+ pv.y (* pv.speed (math.sin pv.dir))))
+      (pix pv.x pv.y 12))
+    (set v.lifetime (- v.lifetime 1))
+    (when (< v.lifetime 0) (table.insert rp k)))
+  ;; remove particle systems
+  (each [rk rv (ipairs rp)] (table.remove particles rv)))
 
 ;; Sprite
 (fn sprite-create [idlist speed basecolor]
@@ -183,11 +208,21 @@
 
 (fn player-clone-now [p m c setplayer]
   (set p.state :INACTIVE)
+  
+  (var x (* (+ p.ix m.mx) 8))
+  (var y (* (+ p.iy m.my) 8))
+
   (var newp (player-create p.ix p.iy (player-entity)))
+  (set newp.entity.x x)
+  (set newp.entity.y y)
+  
   (setplayer newp)
+
   (screen-shake 30 3)
   (sfx 15 43 100 1 2 .1)
-  (sfx 16 50 30 0 8 .1))
+  (sfx 16 50 30 0 8 .1)
+  
+  (ps-create x y 300 50 .1))
 
 (fn player-draw-clone [p m]
   (each [k e (ipairs p.clonepos)]
@@ -199,10 +234,14 @@
   (screen-shake 5 1))
 
 (fn player-die [p killcallback]
-  (screen-shake 10 2)
-  (sfx 17 55 60 0 8 .1)
-  (sfx 15 43 100 1 9 .1)
-  (killcallback))
+  (co-start (lambda [] 
+    (set p.state :DEAD)
+    (set p.entity.sprite 1)
+    (sfx 17 55 60 0 8 .1)
+    (co-wait-time 50)
+    (screen-shake 10 2)
+    (sfx 15 43 100 1 9 .1)
+    (killcallback))))
 
 (fn player-update [pl m c setplayer killcallback]
   (var p pl)
@@ -294,8 +333,6 @@
 (fn _G.TIC []
   (set time (+ time 1))
 
-  (co-update)
-
   ; screen shake
   (when (> shake 0)
     (poke 0x3ff9 (math.random (- 0 shake-amount) shake-amount))
@@ -303,7 +340,10 @@
 		(set shake (- shake 1))
     (when (<= shake 0) (memset 0x3ff9 0 2)))
 
-  (game.update))
+  (game.update)
+  
+  (co-update)
+  (ps-update))
 
 ;; <TILES>
 ;; 002:00ffffff0fe44444fe444444f4444444f4444444f4444444f4444444f4444444
