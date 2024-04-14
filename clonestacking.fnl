@@ -10,7 +10,7 @@
 ;; Globals
 
 (var time 0)
-(var level 3)
+(var level 1)
 (var shake 0)
 (var shake-amount 0)
 (fn screen-shake [time strength] 
@@ -106,7 +106,7 @@
    (sprite-draw (. entity.sprites entity.sprite) (math.ceil entity.x) (math.ceil entity.y)))
 
 ;; Map
-(fn map-create [name idx idy player locks maxclones]
+(fn map-create [name desc idx idy player locks maxclones]
   (var mx (* idx 30))
   (var my (* idy 17))
   
@@ -114,6 +114,7 @@
     :player player
     :locks locks 
     :name name
+    :desc desc
     :intro true
     :maxclones maxclones})
 
@@ -144,13 +145,13 @@
     false))
 
 ;; GAME MAPS DATA
-
 (var LEVELS [
-  (lambda [] (map-create "   Level 01    " 0 1 {:x 8 :y 8 } [] 0))
-  (lambda [] (map-create "   Level 02    " 1 1 {:x 8 :y 8 } [] 1))
-  (lambda [] (map-create "   Level 03    " 2 1 {:x 8 :y 10 } [] 2))
-  (lambda [] (map-create "   Level 04    " 3 1 {:x 2 :y 14 } [] 4))
-  (lambda [] (map-create "   Level 05    " 4 1 {:x 8 :y 8 } [{:x 18 :y 8 :kx 12 :ky 6 :locked true}] 1))  (lambda [] (map-create "    Level 06    " 5 1 {:x 8 :y 8 } [{:x 4 :y 8 :kx 20 :ky 8 :locked true}] 1))
+  (lambda [] (map-create "Level 01" "The green flag is your goal!" 0 1 {:x 8 :y 8 } [] 0))
+  (lambda [] (map-create "Level 02" "Remember to summon your clone with A.\nYou can die now." 1 1 {:x 8 :y 8 } [] 1))
+  (lambda [] (map-create "Level 03" "How many clones can you summon?" 2 1 {:x 8 :y 10 } [] 2))
+  (lambda [] (map-create "Level 04" "Life out there is dangerous!" 3 1 {:x 2 :y 14 } [] 4))
+  (lambda [] (map-create "Level 05" "The key to follow is... the Key!" 4 1 {:x 8 :y 8 } [{:x 18 :y 8 :kx 12 :ky 6 :locked true}] 1))
+  (lambda [] (map-create "Level 06" "You may need to sacrifice something..." 5 1 {:x 8 :y 8 } [{:x 4 :y 8 :kx 20 :ky 8 :locked true}] 1))
 ])
 
 ;; GAME STATES
@@ -398,8 +399,15 @@
 (fn hud-draw [p m]
   (if m.intro
     (let []
-      (rect 30 40 180 50 15)
-      (print m.name 30 60 12 true 2))
+      (rect 20 40 190 70 15)
+      (print m.name 30 50 12 true 2)
+      (print m.desc 30 65 12 true 1 true)
+      (print "Press A to start" 135 100 11 true 1 true)
+      
+    (when (btnp 4)
+      (set stategame.data.player.state :IDLE)
+      (set stategame.data.map.intro false)))
+
     (let []
       (rect 0 0 54 15 15)
       (print (string.gsub m.name "^%s+" "") 5 5 13)
@@ -427,13 +435,7 @@
 
   (set stategame.data.player.state :INACTIVE)
 
-  (sfx 8 53 50 2 15 -1)
-
-  (co-start (lambda [] 
-    (co-wait-time 80)
-    (set stategame.data.player.state :IDLE)
-    (set stategame.data.map.intro false)
-    ))))
+  (sfx 8 53 50 2 15 -1)))
 
 (set stategame.update (fn []
   (cls 0)
