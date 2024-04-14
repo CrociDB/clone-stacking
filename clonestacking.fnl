@@ -499,7 +499,7 @@
                       stategame.data.player)
                   (lambda [] ;; NEW LEVEL
                     (set level (+ 1 level))
-                    (stategame.start)))
+                    (setstate (if (< level (length LEVELS)) stategame statemenu))))
 
   (when (not stategame.data.finished)
     (map-draw stategame.data.map)
