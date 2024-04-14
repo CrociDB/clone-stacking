@@ -10,6 +10,7 @@
 ;; Globals
 
 (var time 0)
+(var level 1)
 (var shake 0)
 (var shake-amount 0)
 (fn screen-shake [time strength] 
@@ -273,7 +274,14 @@
     (sfx 15 43 100 1 9 .1)
     (killcallback))))
 
-(fn player-update [pl m c setplayer killcallback]
+(fn finish-level [p m nextlevel]
+  (co-start (lambda [] 
+      (set p.state :INACTIVE)
+      (set p.entity.sprite 1)
+      (co-wait-time 100)
+      (nextlevel))))
+
+(fn player-update [pl m c setplayer killcallback nextlevel]
   (var p pl)
   (var tx (* p.mx 8))
   (var ty (* p.my 8))
@@ -285,13 +293,14 @@
   (when (<= (math.abs (- p.entity.y ty)) .2) (set p.entity.y ty))
 
   (if (= p.state :IDLE)
-        (let []
+        (let [tile (map-get-tile m p.mx p.my)]
           (when (btnp 0) (player-move-to p :UP m c))
           (when (btnp 1) (player-move-to p :DOWN m c))
           (when (btnp 2) (player-move-to p :LEFT m c))
           (when (btnp 3) (player-move-to p :RIGHT m c))
           (when (btnp 4) (player-start-cloning p m c))
-          (when (= (map-get-tile m p.mx p.my) 6) (set p (player-die p m killcallback))))
+          (when (= tile 6) (set p (player-die p m killcallback)))
+          (when (= tile 8) (finish-level p m nextlevel)))
       (= p.state :CLONING)
         (let []
           (when (btnp 0) (player-move-indicator p :UP m))
@@ -333,7 +342,7 @@
       (print "X Clone" 198 25 13))))
 
 (set stategame.start (fn []
-  (set stategame.data.map ((. LEVELS 1)))
+  (set stategame.data.map ((. LEVELS level)))
   (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y (player-entity)))
   (set stategame.data.clones [stategame.data.player])
 
@@ -351,10 +360,10 @@
   (player-update  stategame.data.player 
                   stategame.data.map 
                   stategame.data.clones
-                  (lambda [newp] 
+                  (lambda [newp] ;; CLONE PLAYER
                     (table.insert stategame.data.clones newp)
                     (set stategame.data.player newp))
-                  (lambda []
+                  (lambda [] ;; PLAYER DIED
                     (if (= (length stategame.data.clones) 1) 
                       (let []
                         ;; RESTART
@@ -364,8 +373,11 @@
                         (var p (. stategame.data.clones (- (length stategame.data.clones) 1)))
                         (table.remove stategame.data.clones)
                         (set p.state :IDLE)
-                        (set stategame.data.player p)
-                        p))))
+                        (set stategame.data.player p)))
+                      stategame.data.player)
+                  (lambda [] ;; NEW LEVEL
+                    (set level (+ 1 level))
+                    (stategame.start)))
 
   (map-draw stategame.data.map)
   (each [k v (ipairs stategame.data.clones)]
