@@ -233,8 +233,8 @@
 (fn player-clone-now [p m c setplayer]
   (set p.state :INACTIVE)
   
-  (var x (* (+ p.ix m.mx) 8))
-  (var y (* (+ p.iy m.my) 8))
+  (var x (* p.ix 8))
+  (var y (* p.iy 8))
 
   (var newp (player-create p.ix p.iy (player-entity)))
   (set newp.entity.x x)
@@ -264,8 +264,8 @@
 
     (sfx 17 55 60 0 8 .1)
     
-    (var x (* (+ p.mx m.mx) 8))
-    (var y (* (+ p.my m.my) 8))
+    (var x (* p.mx 8))
+    (var y (* p.my 8))
     (ps-create (+ 8 x) (+ 8 y) 3 300 150 .2)
 
     (co-wait-time 30)
@@ -328,12 +328,12 @@
       (rect 0 0 53 15 15)
       (rect 200 0 240 15 15)
       (spr 288 202 0 0 1 0 0 2 2)
-      (print "Level 01" 5 5 13)
+      (print (string.gsub m.name "%s+" "") 5 5 13)
       (print "001" 220 5 13)
       (print "X Clone" 198 25 13))))
 
 (set stategame.start (fn []
-  (set stategame.data.map ((. LEVELS 2)))
+  (set stategame.data.map ((. LEVELS 1)))
   (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y (player-entity)))
   (set stategame.data.clones [stategame.data.player])
 
