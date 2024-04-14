@@ -57,7 +57,7 @@
 ;; Particles
 
 (var particles [])
-(fn ps-create [x y amount lifetime speed]
+(fn ps-create [x y color amount lifetime speed]
   (var ps {:x x :y y :particles [] :lifetime lifetime})
   (for [i 0 amount]
     (var p {
@@ -65,6 +65,7 @@
             :x (+ x (math.random -3 3))
             :y (+ y (math.random -3 3))
             :dir (math.random 0 360)
+            :color color
             :lifetime (- lifetime (* lifetime (math.random)))
             :speed (+ speed (* speed (math.random) 2))})
     (table.insert ps.particles p))
@@ -80,7 +81,7 @@
       (set pv.lifetime (- pv.lifetime 1))
       (when (< pv.lifetime 0) (set pv.active 0))
 
-      (when (= pv.active 1) (pix pv.x pv.y 12)))
+      (when (= pv.active 1) (pix pv.x pv.y pv.color)))
     (set v.lifetime (- v.lifetime 1))
     (when (< v.lifetime 0) (table.insert rp k)))
   ;; remove particle systems
@@ -228,7 +229,7 @@
   (sfx 15 43 100 1 2 .1)
   (sfx 16 50 30 0 8 .1)
   
-  (ps-create (+ 8 x) (+ 8 y) 100 40 .5))
+  (ps-create (+ 8 x) (+ 8 y) 12 100 40 .5))
 
 (fn player-draw-clone [p m]
   (each [k e (ipairs p.clonepos)]
@@ -239,12 +240,18 @@
   (set p.state :IDLE)
   (screen-shake 5 1))
 
-(fn player-die [p killcallback]
+(fn player-die [p m killcallback]
   (co-start (lambda [] 
     (set p.state :DEAD)
     (set p.entity.sprite 1)
+
     (sfx 17 55 60 0 8 .1)
-    (co-wait-time 50)
+    
+    (var x (* (+ p.mx m.mx) 8))
+    (var y (* (+ p.my m.my) 8))
+    (ps-create (+ 8 x) (+ 8 y) 3 300 150 .2)
+
+    (co-wait-time 30)
     (screen-shake 10 2)
     (sfx 15 43 100 1 9 .1)
     (killcallback))))
@@ -267,7 +274,7 @@
           (when (btnp 2) (player-move-to p :LEFT m c))
           (when (btnp 3) (player-move-to p :RIGHT m c))
           (when (btnp 4) (player-start-cloning p m c))
-          (when (= (map-get-tile m p.mx p.my) 6) (set p (player-die p killcallback))))
+          (when (= (map-get-tile m p.mx p.my) 6) (set p (player-die p m killcallback))))
       (= p.state :CLONING)
         (let []
           (when (btnp 0) (player-move-indicator p :UP m))
