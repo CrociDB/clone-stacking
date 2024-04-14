@@ -61,10 +61,12 @@
   (var ps {:x x :y y :particles [] :lifetime lifetime})
   (for [i 0 amount]
     (var p {
+            :active 1
             :x (+ x (math.random -3 3))
             :y (+ y (math.random -3 3))
             :dir (math.random 0 360)
-            :speed (+ speed (* 2 (math.random)))})
+            :lifetime (- lifetime (* lifetime (math.random)))
+            :speed (+ speed (* speed (math.random) 2))})
     (table.insert ps.particles p))
   (table.insert particles ps))
 
@@ -74,7 +76,11 @@
     (each [pk pv (ipairs v.particles)]
       (set pv.x (+ pv.x (* pv.speed (math.cos pv.dir))))
       (set pv.y (+ pv.y (* pv.speed (math.sin pv.dir))))
-      (pix pv.x pv.y 12))
+
+      (set pv.lifetime (- pv.lifetime 1))
+      (when (< pv.lifetime 0) (set pv.active 0))
+
+      (when (= pv.active 1) (pix pv.x pv.y 12)))
     (set v.lifetime (- v.lifetime 1))
     (when (< v.lifetime 0) (table.insert rp k)))
   ;; remove particle systems
@@ -222,7 +228,7 @@
   (sfx 15 43 100 1 2 .1)
   (sfx 16 50 30 0 8 .1)
   
-  (ps-create x y 300 50 .1))
+  (ps-create (+ 8 x) (+ 8 y) 100 40 .5))
 
 (fn player-draw-clone [p m]
   (each [k e (ipairs p.clonepos)]
