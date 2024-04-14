@@ -112,7 +112,8 @@
   {:mx mx :my my 
     :player player
     :goal goal 
-    :name name})
+    :name name
+    :intro true})
 
 (fn map-draw [m]
   (map m.mx m.my 30 17 0 0 0 1 nil))
@@ -130,8 +131,8 @@
 ;; GAME MAPS DATA
 
 (var LEVELS [
-  (lambda [] (map-create "Tutorial" 0 1 {:x 8 :y 8 } {:x 19 :y 8 }))
-  (lambda [] (map-create "Level 00" 1 1 {:x 8 :y 8 } {:x 19 :y 8 }))
+  (lambda [] (map-create "   Tutorial    " 0 1 {:x 8 :y 8 } {:x 19 :y 8 }))
+  (lambda [] (map-create "    Level 1    " 1 1 {:x 8 :y 8 } {:x 19 :y 8 }))
 ])
 
 ;; GAME STATES
@@ -319,18 +320,30 @@
   (entity-draw pi))
 
 (fn hud-draw [p m]
-  (rect 0 0 53 15 15)
-  (rect 200 0 240 15 15)
-  (spr 288 202 0 0 1 0 0 2 2)
-  (print "Level 01" 5 5 13)
-  (print "001" 220 5 13)
-  (print "X Clone" 198 25 13))
+  (if m.intro
+    (let []
+      (rect 30 40 180 50 15)
+      (print m.name 30 60 12 true 2))
+    (let []
+      (rect 0 0 53 15 15)
+      (rect 200 0 240 15 15)
+      (spr 288 202 0 0 1 0 0 2 2)
+      (print "Level 01" 5 5 13)
+      (print "001" 220 5 13)
+      (print "X Clone" 198 25 13))))
 
 (set stategame.start (fn []
   (set stategame.data.map ((. LEVELS 2)))
   (set stategame.data.player (player-create stategame.data.map.player.x stategame.data.map.player.y (player-entity)))
   (set stategame.data.clones [stategame.data.player])
-  (trace "STARTING GAME")))
+
+  (set stategame.data.player.state :INACTIVE)
+
+  (co-start (lambda [] 
+    (co-wait-time 80)
+    (set stategame.data.player.state :IDLE)
+    (set stategame.data.map.intro false)
+    ))))
 
 (set stategame.update (fn []
   (cls 0)
