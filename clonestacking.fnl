@@ -459,7 +459,6 @@
       (rect 0 0 i 136 0)
       (co-wait-time 1))
 
-
     (setstate stategame))))
 
 (set statemenu.start (lambda [] 
@@ -478,6 +477,14 @@
 
     (print "STACKING" (- 88 side) 45 14 true 3)
     (print "STACKING" (- 86 side) 43 12 true 3)
+
+    (when (= 0 (% time 60))
+      (ps-create 250 10 13 150 30 .5)
+      (ps-create 250 130 13 150 30 .5)
+
+      (ps-create 65 (+ height 75) 3 70 20 .4)
+      (ps-create 100 (+ height 75) 3 70 20 .4)
+    )
 
     (when statemenu.data.active true
       (var color 
